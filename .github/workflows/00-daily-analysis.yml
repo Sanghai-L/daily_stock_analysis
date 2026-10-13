@@ -4,8 +4,6 @@ on:
   # 定时触发 - 工作日北京时间 18:17 (UTC 10:17)，避开整点调度高峰
   schedule:
     - cron: '17 10 * * 1-5'    # 周一到周五，UTC 10:17 = 北京时间 18:17
-    # 临时定时验证：每 5 分钟，仅用于本次检修，验证或窗口结束后删除
-    - cron: '*/5 * * * *'
   
   # 手动触发
   workflow_dispatch:
@@ -31,25 +29,7 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  schedule-probe:
-    if: ${{ github.event_name == 'schedule' && github.event.schedule != '17 10 * * 1-5' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 3
-    permissions: {}
-    steps:
-      - name: 验证定时事件（无需模型或通知密钥）
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          SCHEDULE_EXPRESSION: ${{ github.event.schedule }}
-          RUN_REF: ${{ github.ref }}
-          RUN_SHA: ${{ github.sha }}
-        run: |
-          test "$EVENT_NAME" = "schedule"
-          printf 'event=%s\nschedule=%s\nref=%s\nsha=%s\n' "$EVENT_NAME" "$SCHEDULE_EXPRESSION" "$RUN_REF" "$RUN_SHA"
-          date -u +"triggered_at_utc=%Y-%m-%dT%H:%M:%SZ"
-
   analyze:
-    if: ${{ github.event_name != 'schedule' || github.event.schedule == '17 10 * * 1-5' }}
     runs-on: ubuntu-latest
     # 兼容误将 STOCK_LIST 配到同名 Environment variables 的场景；
     # 推荐位置仍是 Settings -> Secrets and variables -> Actions -> Repository variables。
