@@ -1,0 +1,23 @@
+name: 临时定时调度诊断
+
+on:
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions: {}
+
+jobs:
+  schedule-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: 核验新工作流的自动调度
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          SCHEDULE_EXPRESSION: ${{ github.event.schedule }}
+          RUN_REF: ${{ github.ref }}
+          RUN_SHA: ${{ github.sha }}
+        run: |
+          test "$EVENT_NAME" = "schedule"
+          printf 'event=%s\nschedule=%s\nref=%s\nsha=%s\n' "$EVENT_NAME" "$SCHEDULE_EXPRESSION" "$RUN_REF" "$RUN_SHA"
+          date -u +"triggered_at_utc=%Y-%m-%dT%H:%M:%SZ"
