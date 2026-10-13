@@ -436,19 +436,19 @@ git push
 
 ### Schedule Details
 
-Default configuration: **Monday to Friday, 18:00 Beijing Time** auto-execution
+Default configuration: **Monday to Friday, 18:17 Beijing Time**, avoiding GitHub Actions' busy start of the hour. Actual execution may start later.
 
 Modify time: Edit cron expression in `.github/workflows/00-daily-analysis.yml`:
 
 ```yaml
 schedule:
-  - cron: '0 10 * * 1-5'  # UTC time, +8 = Beijing time
+  - cron: '17 10 * * 1-5'  # UTC time, +8 = Beijing time
 ```
 
 Common cron examples:
 | Expression | Description |
 |--------|------|
-| `'0 10 * * 1-5'` | Mon-Fri 18:00 (Beijing) |
+| `'17 10 * * 1-5'` | Mon-Fri 18:17 (Beijing, default) |
 | `'30 7 * * 1-5'` | Mon-Fri 15:30 (Beijing) |
 | `'0 10 * * *'` | Daily 18:00 (Beijing) |
 | `'0 2 * * 1-5'` | Mon-Fri 10:00 (Beijing) |
@@ -467,7 +467,9 @@ git push
 ### FAQ
 
 **Q: Why isn't the scheduled task running?**
-A: GitHub Actions scheduled tasks may have 5-15 minute delays, and only trigger when repo has activity. Long periods without commits may cause workflow to be disabled.
+A: Scheduled workflows use the default branch. First confirm that Actions and the workflow are enabled, then check the run history for a `schedule` event; if no run exists, analysis and email delivery have not started. GitHub may delay or drop scheduled jobs under high load, especially at the start of the hour. The default time avoids that peak but does not guarantee execution or punctuality. Scheduled workflows in public repositories are automatically disabled after 60 days without repository activity and must be re-enabled. See the [official GitHub documentation](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#schedule).
+
+After changing the schedule, temporarily add a scheduled check that reads no secrets and performs no stock analysis. Verify that its run event is `schedule`, then remove the check. A successful manual run verifies the analysis pipeline, not automatic scheduling. If today's report is missing, recover it manually after checking the run history; avoid concurrent analysis runs that could duplicate emails and model charges.
 
 **Q: How to view historical reports?**
 A: Actions → Select run record → Artifacts → Download `analysis-reports-xxx`
